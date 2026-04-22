@@ -1,0 +1,13 @@
+{
+  "name": "x-auto-follow-verified",
+  "version": "1.0.0",
+  "description": "Sigue automáticamente a seguidores verificados en X",
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "echo 'No build step needed'"
+  },
+  "dependencies": {
+    "oauth-1.0a": "^2.2.6",
+    "crypto-js": "^4.2.0"
+  }
+}

@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Auto Follow Verificados — X</title>
+<style>
+  :root {
+    --bg: #0f0f0f;
+    --surface: #1a1a1a;
+    --surface2: #242424;
+    --border: rgba(255,255,255,0.08);
+    --border2: rgba(255,255,255,0.15);
+    --text: #f0f0f0;
+    --muted: #888;
+    --hint: #555;
+    --blue: #1d9bf0;
+    --blue-dim: rgba(29,155,240,0.12);
+    --green: #00ba7c;
+    --green-dim: rgba(0,186,124,0.12);
+    --warn: #f4a61d;
+    --warn-dim: rgba(244,166,29,0.1);
+    --red: #f4212e;
+    --red-dim: rgba(244,33,46,0.1);
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { background: var(--bg); color: var(--text); font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif; font-size: 15px; }
+  body { min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 24px 16px 60px; }
+
+  .logo-wrap { display: flex; align-items: center; gap: 10px; margin-bottom: 32px; margin-top: 8px; }
+  .logo-wrap .x-icon { width: 32px; height: 32px; background: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+  .logo-wrap .x-icon svg { width: 18px; height: 18px; fill: black; }
+  .logo-wrap h1 { font-size: 20px; font-weight: 600; letter-spacing: -0.3px; }
+
+  .container { width: 100%; max-width: 480px; }
+
+  .tabs { display: flex; gap: 2px; background: var(--surface); border-radius: var(--radius); padding: 4px; margin-bottom: 20px; }
+  .tab { flex: 1; text-align: center; padding: 8px; font-size: 13px; border-radius: 9px; cursor: pointer; color: var(--muted); border: none; background: transparent; transition: all 0.15s; }
+  .tab.active { background: var(--surface2); color: var(--text); font-weight: 500; }
+  .tab:hover:not(.active) { color: var(--text); }
+
+  .card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 18px 20px; margin-bottom: 12px; }
+  .card-title { font-size: 13px; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+  .card-title .num { width: 20px; height: 20px; background: var(--surface2); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; color: var(--hint); }
+
+  label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 5px; }
+  input[type="text"], input[type="password"] {
+    width: 100%; background: var(--surface2); border: 0.5px solid var(--border2); border-radius: var(--radius-sm);
+    color: var(--text); padding: 10px 12px; font-size: 14px; outline: none; margin-bottom: 10px;
+  }
+  input:focus { border-color: var(--blue); }
+  input::placeholder { color: var(--hint); }
+
+  .info { background: var(--blue-dim); border: 0.5px solid rgba(29,155,240,0.2); border-radius: var(--radius-sm); padding: 10px 13px; font-size: 12px; color: rgba(29,155,240,0.9); line-height: 1.6; margin-top: 4px; }
+  .info a { color: var(--blue); }
+
+  .slider-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .slider-box { background: var(--surface2); border-radius: var(--radius-sm); padding: 12px; }
+  .slider-box .val { font-size: 22px; font-weight: 600; display: block; margin-bottom: 2px; }
+  .slider-box .slabel { font-size: 11px; color: var(--muted); margin-bottom: 8px; display: block; }
+  input[type="range"] {
+    width: 100%; -webkit-appearance: none; height: 3px; background: var(--border2); border-radius: 2px; outline: none;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 16px; height: 16px; background: var(--blue); border-radius: 50%; cursor: pointer;
+  }
+
+  .btn { width: 100%; padding: 12px; border-radius: var(--radius-sm); font-size: 15px; font-weight: 600; cursor: pointer; border: none; transition: all 0.15s; }
+  .btn-primary { background: var(--blue); color: white; }
+  .btn-primary:hover { background: #1a8cd8; }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-ghost { background: transparent; color: var(--text); border: 0.5px solid var(--border2); margin-top: 8px; }
+  .btn-ghost:hover { background: var(--surface2); }
+  .btn-danger { background: transparent; color: var(--red); border: 0.5px solid rgba(244,33,46,0.3); margin-top: 8px; }
+
+  /* Stats */
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+  .stat { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-sm); padding: 14px; text-align: center; }
+  .stat .n { font-size: 26px; font-weight: 700; display: block; }
+  .stat .l { font-size: 11px; color: var(--muted); margin-top: 2px; display: block; }
+  .stat.blue .n { color: var(--blue); }
+  .stat.green .n { color: var(--green); }
+  .stat.warn .n { color: var(--warn); }
+
+  /* Progress */
+  .prog-wrap { margin: 4px 0 12px; }
+  .prog-track { height: 3px; background: var(--surface2); border-radius: 2px; overflow: hidden; }
+  .prog-bar { height: 100%; background: var(--blue); border-radius: 2px; transition: width 0.3s ease; }
+  .prog-label { font-size: 12px; color: var(--muted); margin-top: 6px; }
+
+  /* Log */
+  .logbox { background: var(--surface2); border-radius: var(--radius-sm); padding: 12px 14px; max-height: 150px; overflow-y: auto; font-size: 12px; font-family: 'SF Mono', 'Fira Mono', monospace; line-height: 1.9; }
+  .logbox .e { color: var(--muted); }
+  .logbox .ok { color: var(--green); }
+  .logbox .warn { color: var(--warn); }
+  .logbox .err { color: var(--red); }
+
+  /* Status badge */
+  .badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+  .badge.idle { background: var(--surface2); color: var(--muted); }
+  .badge.running { background: var(--blue-dim); color: var(--blue); }
+  .badge.done { background: var(--green-dim); color: var(--green); }
+  .badge.paused { background: var(--warn-dim); color: var(--warn); }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .dot.pulse { animation: pulse 1.2s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
+
+  /* Bio tab */
+  .url-display { background: var(--surface2); border-radius: var(--radius-sm); padding: 12px; word-break: break-all; font-size: 13px; font-family: 'SF Mono', monospace; color: var(--blue); line-height: 1.5; }
+  .copy-row { display: flex; gap: 8px; margin-top: 8px; }
+  .copy-row button { flex: 1; background: transparent; border: 0.5px solid var(--border2); border-radius: var(--radius-sm); color: var(--muted); font-size: 12px; padding: 8px; cursor: pointer; }
+  .copy-row button:hover { color: var(--text); background: var(--surface2); }
+
+  .steps { list-style: none; counter-reset: steps; }
+  .steps li { counter-increment: steps; display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; border-bottom: 0.5px solid var(--border); font-size: 13px; color: var(--muted); line-height: 1.5; }
+  .steps li:last-child { border-bottom: none; }
+  .steps li::before { content: counter(steps); width: 20px; height: 20px; background: var(--surface2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; flex-shrink: 0; margin-top: 1px; color: var(--hint); }
+  .steps li strong { color: var(--text); }
+
+  .hidden { display: none !important; }
+
+  @media (max-width: 420px) {
+    .stats { grid-template-columns: 1fr 1fr; }
+    .stats .stat:last-child { grid-column: span 2; }
+  }
+</style>
+</head>
+<body>
+
+<div class="logo-wrap">
+  <div class="x-icon">
+    <svg viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+  </div>
+  <h1>Auto Follow Verificados</h1>
+</div>
+
+<div class="container">
+
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('setup')">Configuración</button>
+    <button class="tab" onclick="showTab('run')">Ejecutar</button>
+    <button class="tab" onclick="showTab('bio')">Bio Link</button>
+  </div>
+
+  <!-- ===== TAB SETUP ===== -->
+  <div id="tab-setup">
+
+    <div class="card">
+      <div class="card-title"><span class="num">1</span> Credenciales API de X</div>
+      <label>API Key (Consumer Key)</label>
+      <input type="text" id="apiKey" placeholder="xxxxxxxxxxxxxxxxxxxxxx" />
+      <label>API Secret</label>
+      <input type="password" id="apiSecret" placeholder="••••••••••••••••••••••" />
+      <label>Access Token</label>
+      <input type="text" id="accessToken" placeholder="000000000-xxxxxxxxxxxxxx" />
+      <label>Access Token Secret</label>
+      <input type="password" id="accessSecret" placeholder="••••••••••••••••••••••" />
+      <div class="info">
+        Obtén estas claves en <a href="https://developer.twitter.com/en/portal/dashboard" target="_blank">developer.twitter.com</a> →
+        Tu App → Keys and Tokens. Necesitas permisos <strong>Read and Write</strong>.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="num">2</span> Usuario de X</div>
+      <label>Tu @usuario (sin @)</label>
+      <input type="text" id="username" placeholder="elonmusk" />
+      <div class="info">
+        Se buscarán los seguidores de esta cuenta y se seguirán automáticamente los que tengan verificación oficial (palomita azul, empresa o gobierno).
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="num">3</span> Límites de velocidad</div>
+      <div class="slider-row">
+        <div class="slider-box">
+          <span class="val" id="batchVal">15</span>
+          <span class="slabel">follows por lote</span>
+          <input type="range" min="5" max="15" value="15" step="1"
+            oninput="document.getElementById('batchVal').textContent=this.value; appState.batch=+this.value" />
+        </div>
+        <div class="slider-box">
+          <span class="val" id="pauseVal">15</span>
+          <span class="slabel">minutos entre lotes</span>
+          <input type="range" min="10" max="60" value="15" step="5"
+            oninput="document.getElementById('pauseVal').textContent=this.value; appState.pauseMin=+this.value" />
+        </div>
+      </div>
+      <div class="info" style="margin-top:10px;">
+        X permite ~400 follows/día. Con lotes de 15 cada 15 min. = 96/día máximo — muy por debajo del límite.
+      </div>
+    </div>
+
+    <button class="btn btn-primary" onclick="goToRun()">Guardar y ejecutar →</button>
+
+  </div>
+
+  <!-- ===== TAB RUN ===== -->
+  <div id="tab-run" class="hidden">
+
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+      <span id="statusBadge" class="badge idle"><span class="dot"></span>Listo</span>
+      <span id="batchInfo" style="font-size:12px; color:var(--muted);">Lotes de 15 c/15 min.</span>
+    </div>
+
+    <div class="stats">
+      <div class="stat blue"><span class="n" id="sFound">0</span><span class="l">Encontrados</span></div>
+      <div class="stat green"><span class="n" id="sDone">0</span><span class="l">Seguidos</span></div>
+      <div class="stat warn"><span class="n" id="sSkip">0</span><span class="l">Ya seguían</span></div>
+    </div>
+
+    <div class="card">
+      <div class="prog-wrap">
+        <div class="prog-track"><div class="prog-bar" id="pbar" style="width:0%"></div></div>
+        <div class="prog-label" id="plabel">Presiona Iniciar para comenzar</div>
+      </div>
+      <div class="logbox" id="logbox">
+        <div class="e">Esperando inicio...</div>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" id="startBtn" onclick="startProcess()">Iniciar proceso</button>
+    <button class="btn btn-ghost hidden" id="pauseBtn" onclick="togglePause()">Pausar</button>
+    <button class="btn btn-danger hidden" id="stopBtn" onclick="stopProcess()">Detener</button>
+
+  </div>
+
+  <!-- ===== TAB BIO ===== -->
+  <div id="tab-bio" class="hidden">
+
+    <div class="card">
+      <div class="card-title">Tu link para la bio de X</div>
+      <div class="url-display" id="bioUrl">https://tu-proyecto.vercel.app</div>
+      <div class="copy-row">
+        <button onclick="copyText('bioUrl', this)">Copiar URL</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Textos para tu bio</div>
+      <div class="url-display" id="bio1" style="margin-bottom:8px; font-family:inherit; font-size:13px; color:var(--text);">🔵 Sigue automáticamente a mis seguidores verificados → <span class="url-text">https://tu-proyecto.vercel.app</span></div>
+      <div class="copy-row"><button onclick="copyBio(1, this)">Copiar opción A</button></div>
+      <div class="url-display" id="bio2" style="margin: 8px 0; font-family:inherit; font-size:13px; color:var(--text);">Herramienta: sigue a todos los verificados que me siguen. API oficial de X → <span class="url-text">https://tu-proyecto.vercel.app</span></div>
+      <div class="copy-row"><button onclick="copyBio(2, this)">Copiar opción B</button></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Cómo publicar en Vercel</div>
+      <ol class="steps">
+        <li>Descomprime el ZIP que descargaste y entra a la carpeta</li>
+        <li>Sube el código a un repositorio en <strong>github.com</strong></li>
+        <li>Entra a <strong>vercel.com</strong> → New Project → conecta tu repo</li>
+        <li>Framework Preset: <strong>Other</strong> — no cambies nada más</li>
+        <li>Clic en <strong>Deploy</strong> — en ~30 seg tienes tu URL</li>
+        <li>Copia la URL y ponla en tu bio de X</li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Variables de entorno (opcional)</div>
+      <div class="info">
+        Si quieres que la app se pre-cargue con tus credenciales para otros usuarios,
+        puedes configurarlas en Vercel → Settings → Environment Variables:<br><br>
+        <code style="font-size:11px; display:block; line-height:2;">
+          X_API_KEY=tu_api_key<br>
+          X_API_SECRET=tu_api_secret<br>
+          X_ACCESS_TOKEN=tu_access_token<br>
+          X_ACCESS_SECRET=tu_access_secret<br>
+          X_USERNAME=tu_usuario
+        </code>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+const appState = {
+  batch: 15,
+  pauseMin: 15,
+  running: false,
+  paused: false,
+  sourceUserId: null,
+  queue: [],
+  done: 0,
+  skipped: 0,
+  errors: 0,
+  stopRequested: false,
+};
+
+function showTab(name) {
+  ['setup','run','bio'].forEach((t, i) => {
+    document.getElementById('tab-' + t).classList.toggle('hidden', t !== name);
+    document.querySelectorAll('.tab')[i].classList.toggle('active', t === name);
+  });
+}
+
+function goToRun() {
+  const k = document.getElementById('apiKey').value.trim();
+  const s = document.getElementById('apiSecret').value.trim();
+  const at = document.getElementById('accessToken').value.trim();
+  const as = document.getElementById('accessSecret').value.trim();
+  const u = document.getElementById('username').value.trim();
+  if (!k || !s || !at || !as || !u) {
+    alert('Por favor completa todos los campos antes de continuar.');
+    return;
+  }
+  document.getElementById('batchInfo').textContent =
+    `Lotes de ${appState.batch} c/${appState.pauseMin} min.`;
+  showTab('run');
+}
+
+function log(msg, type = 'e') {
+  const box = document.getElementById('logbox');
+  const t = new Date().toLocaleTimeString('es-MX', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+  const el = document.createElement('div');
+  el.className = type;
+  el.textContent = `${t}  ${msg}`;
+  box.appendChild(el);
+  box.scrollTop = box.scrollHeight;
+}
+
+function setStatus(state) {
+  const badge = document.getElementById('statusBadge');
+  const labels = { idle:'Listo', running:'Ejecutando', paused:'Pausado', done:'Completado' };
+  badge.className = `badge ${state}`;
+  badge.innerHTML = `<span class="dot${state==='running'?' pulse':''}"></span>${labels[state]||state}`;
+}
+
+function updateStats() {
+  document.getElementById('sFound').textContent = appState.queue.length;
+  document.getElementById('sDone').textContent = appState.done;
+  document.getElementById('sSkip').textContent = appState.skipped;
+  const total = appState.queue.length;
+  const prog = total > 0 ? Math.round((appState.done + appState.skipped + appState.errors) / total * 100) : 0;
+  document.getElementById('pbar').style.width = prog + '%';
+}
+
+function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+async function fetchFollowers() {
+  const username = document.getElementById('username').value.trim();
+  const creds = getCreds();
+  let allVerified = [];
+  let nextToken = null;
+  let pages = 0;
+
+  log(`Buscando seguidores de @${username}...`);
+
+  do {
+    const resp = await fetch('/api/followers', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...creds, username, paginationToken: nextToken }),
+    });
+    const data = await resp.json();
+
+    if (!resp.ok) {
+      log(`Error: ${data.error || resp.statusText}`, 'err');
+      break;
+    }
+
+    allVerified = allVerified.concat(data.verified || []);
+    nextToken = data.nextToken;
+    appState.sourceUserId = data.userId;
+    pages++;
+
+    log(`Página ${pages}: +${data.verified?.length || 0} verificados (total: ${allVerified.length})`, 'ok');
+
+    if (nextToken) await delay(1000); // small pause between pages
+
+  } while (nextToken && pages < 20);
+
+  return allVerified;
+}
+
+function getCreds() {
+  return {
+    apiKey: document.getElementById('apiKey').value.trim(),
+    apiSecret: document.getElementById('apiSecret').value.trim(),
+    accessToken: document.getElementById('accessToken').value.trim(),
+    accessSecret: document.getElementById('accessSecret').value.trim(),
+  };
+}
+
+async function startProcess() {
+  if (appState.running) return;
+  appState.running = true;
+  appState.stopRequested = false;
+  appState.done = 0;
+  appState.skipped = 0;
+  appState.errors = 0;
+
+  document.getElementById('startBtn').disabled = true;
+  document.getElementById('pauseBtn').classList.remove('hidden');
+  document.getElementById('stopBtn').classList.remove('hidden');
+  setStatus('running');
+
+  try {
+    // Fase 1: obtener seguidores verificados
+    const verified = await fetchFollowers();
+    appState.queue = verified;
+    log(`Total encontrados: ${verified.length} usuarios verificados`, 'ok');
+    updateStats();
+
+    if (verified.length === 0) {
+      log('No se encontraron seguidores verificados.', 'warn');
+      finishProcess();
+      return;
+    }
+
+    const creds = getCreds();
+    let i = 0;
+
+    // Fase 2: seguir en lotes
+    while (i < appState.queue.length && !appState.stopRequested) {
+      while (appState.paused && !appState.stopRequested) await delay(500);
+      if (appState.stopRequested) break;
+
+      const batchEnd = Math.min(i + appState.batch, appState.queue.length);
+      log(`--- Lote ${Math.floor(i/appState.batch)+1}: usuarios ${i+1}–${batchEnd} ---`, 'e');
+
+      for (let j = i; j < batchEnd; j++) {
+        if (appState.stopRequested) break;
+        while (appState.paused && !appState.stopRequested) await delay(500);
+
+        const user = appState.queue[j];
+        document.getElementById('plabel').textContent =
+          `Procesando @${user.username} (${j+1}/${appState.queue.length})`;
+
+        try {
+          const resp = await fetch('/api/follow', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              ...creds,
+              sourceUserId: appState.sourceUserId,
+              targetUserId: user.id,
+            }),
+          });
+          const data = await resp.json();
+
+          if (resp.status === 429) {
+            // Rate limit hit — esperar y reintentar
+            const waitMs = data.resetAt ? (data.resetAt - Date.now() + 5000) : (15 * 60 * 1000);
+            const waitMin = Math.ceil(waitMs / 60000);
+            log(`Rate limit alcanzado. Esperando ${waitMin} min...`, 'warn');
+            document.getElementById('plabel').textContent = `Rate limit — esperando ${waitMin} min.`;
+            await delay(waitMs);
+            j--; // reintentar este usuario
+            continue;
+          }
+
+          if (data.already_following) {
+            appState.skipped++;
+            log(`Ya sigues a @${user.username}`, 'warn');
+          } else if (data.success) {
+            appState.done++;
+            log(`Siguiendo @${user.username} ✓`, 'ok');
+          } else {
+            appState.errors++;
+            log(`Error con @${user.username}: ${data.error || 'desconocido'}`, 'err');
+          }
+        } catch (e) {
+          appState.errors++;
+          log(`Error de red con @${user.username}`, 'err');
+        }
+
+        updateStats();
+        // Pequeña pausa entre cada follow (evita spikes)
+        await delay(800 + Math.random() * 400);
+      }
+
+      i = batchEnd;
+
+      // Pausa entre lotes si quedan más
+      if (i < appState.queue.length && !appState.stopRequested) {
+        const waitMs = appState.pauseMin * 60 * 1000;
+        log(`Lote completado. Pausa de ${appState.pauseMin} min. antes del siguiente...`, 'warn');
+        document.getElementById('plabel').textContent =
+          `Esperando ${appState.pauseMin} min. (siguiente lote en ${new Date(Date.now()+waitMs).toLocaleTimeString('es-MX')})`;
+        await delay(waitMs);
+      }
+    }
+
+    finishProcess();
+
+  } catch (err) {
+    log(`Error inesperado: ${err.message}`, 'err');
+    finishProcess();
+  }
+}
+
+function finishProcess() {
+  appState.running = false;
+  document.getElementById('startBtn').disabled = false;
+  document.getElementById('startBtn').textContent = 'Ejecutar de nuevo';
+  document.getElementById('pauseBtn').classList.add('hidden');
+  document.getElementById('stopBtn').classList.add('hidden');
+  setStatus('done');
+  document.getElementById('pbar').style.width = '100%';
+  document.getElementById('plabel').textContent =
+    `Completado — ${appState.done} seguidos, ${appState.skipped} ya seguían, ${appState.errors} errores`;
+  log(`Proceso finalizado. Seguidos: ${appState.done} | Ya seguían: ${appState.skipped} | Errores: ${appState.errors}`, 'ok');
+}
+
+function togglePause() {
+  appState.paused = !appState.paused;
+  document.getElementById('pauseBtn').textContent = appState.paused ? 'Reanudar' : 'Pausar';
+  setStatus(appState.paused ? 'paused' : 'running');
+  log(appState.paused ? 'Proceso pausado.' : 'Proceso reanudado.');
+}
+
+function stopProcess() {
+  appState.stopRequested = true;
+  appState.paused = false;
+  log('Detención solicitada...', 'warn');
+}
+
+function copyText(id, btn) {
+  const text = document.getElementById(id).textContent.trim();
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = '¡Copiado!';
+    setTimeout(() => btn.textContent = 'Copiar URL', 2000);
+  });
+}
+
+function copyBio(n, btn) {
+  const url = window.location.origin;
+  const opts = {
+    1: `🔵 Sigue automáticamente a mis seguidores verificados → ${url}`,
+    2: `Herramienta: sigue a todos los verificados que me siguen. API oficial de X → ${url}`,
+  };
+  navigator.clipboard.writeText(opts[n]).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = '¡Copiado!';
+    setTimeout(() => btn.textContent = orig, 2000);
+  });
+}
+
+// Actualizar URLs con la URL real
+window.addEventListener('load', () => {
+  const url = window.location.origin;
+  document.getElementById('bioUrl').textContent = url;
+  document.querySelectorAll('.url-text').forEach(el => el.textContent = url);
+});
+</script>
+</body>
+</html>
